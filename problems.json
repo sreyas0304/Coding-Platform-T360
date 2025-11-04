@@ -1,0 +1,17 @@
+[
+  { "title": "Two Sum (hash map)", "difficulty": "Easy",   "categories": ["Array", "Hashing"] },
+  { "title": "Contains Duplicate", "difficulty": "Easy",   "categories": ["Array", "Hashing"] },
+  { "title": "Valid Anagram", "difficulty": "Easy",        "categories": ["String", "Hashing"] },
+  { "title": "Product of Array Except Self", "difficulty": "Medium", "categories": ["Array"] },
+  { "title": "Longest Consecutive Sequence", "difficulty": "Medium", "categories": ["Array", "Hashing"] },
+  { "title": "3Sum", "difficulty": "Medium",               "categories": ["Array", "Two Pointers"] },
+
+  { "title": "Valid Palindrome", "difficulty": "Easy",     "categories": ["Two Pointers", "String"] },
+  { "title": "Two Sum II (sorted)", "difficulty": "Easy",  "categories": ["Two Pointers", "Array", "Sorted"] },
+  { "title": "Longest Substring Without Repeating Characters", "difficulty": "Medium", "categories": ["Sliding Window", "String", "Hashing"] },
+  { "title": "Minimum Window Substring", "difficulty": "Hard", "categories": ["Sliding Window", "String", "Hashing"] },
+
+  { "title": "Valid Parentheses", "difficulty": "Easy",    "categories": ["Stack"] },
+  { "title": "Min Stack", "difficulty": "Medium",          "categories": ["Stack", "Design"] },
+  { "title": "Daily Temperatures", "difficulty": "Medium", "categories": ["Stack", "Monotonic Stack"] }
+]
