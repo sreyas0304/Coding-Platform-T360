@@ -1,11 +1,65 @@
+# from django.shortcuts import render
+
+# # Create your views here.
+# # problems/views.py
+# import json, logging
+# from django.http import JsonResponse, HttpResponseNotAllowed
+# from django.views.decorators.csrf import csrf_exempt
+
+# logger = logging.getLogger("health")
+
+# @csrf_exempt
+# def health_check(request):
+#     try:
+#         if request.method == "GET":
+#             return JsonResponse({"status": "ok", "method": "GET"})
+#         if request.method == "POST":
+#             try:
+#                 body = json.loads(request.body or b"{}")
+#             except json.JSONDecodeError:
+#                 return JsonResponse({"detail": "Invalid JSON"}, status=400)
+#             return JsonResponse({"status": "ok", "method": "POST", "echo": body})
+#         return HttpResponseNotAllowed(["GET", "POST"])
+#     except Exception:
+#         logger.exception("health_check error")
+#         return JsonResponse({"detail": "Internal Server Error"}, status=500)
+
 import re
 import datetime as dt
+import json, logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .mongo import problems_col
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponseNotAllowed
+from django.views.decorators.csrf import csrf_exempt
+
+logger = logging.getLogger("health")
 
 DIFFICULTIES = {"Easy", "Medium", "Hard"}
+
+@csrf_exempt
+def health_check(request):
+    """
+    GET  /api/healthz  -> {"status":"ok","method":"GET"}
+    POST /api/healthz  -> echoes JSON body: {"status":"ok","method":"POST","echo":{...}}
+    Other methods      -> 405
+    """
+    try:
+        if request.method == "GET":
+            return JsonResponse({"status": "ok", "method": "GET"})
+        if request.method == "POST":
+            try:
+                body = json.loads(request.body or b"{}")
+            except json.JSONDecodeError:
+                return JsonResponse({"detail": "Invalid JSON"}, status=400)
+            return JsonResponse({"status": "ok", "method": "POST", "echo": body})
+        return HttpResponseNotAllowed(["GET", "POST"])
+    except Exception:
+        logger.exception("health_check error")
+        return JsonResponse({"detail": "Internal Server Error"}, status=500)
+
 
 def slugify(s: str) -> str:
     s = s.strip().lower()
@@ -91,5 +145,7 @@ class ProblemsView(APIView):
         return Response({"upserted": upserted, "results": results}, status=status.HTTP_201_CREATED)
 
     def get(self, request):
+        print("hello")
         cursor = problems_col.find({}, {"_id": 0}).sort([("title", 1)])
         return Response(list(cursor), status=status.HTTP_200_OK)
+
