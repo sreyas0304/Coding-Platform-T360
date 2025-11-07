@@ -19,7 +19,9 @@ if use_srv:
 _client = MongoClient(uri, username=username, password=password, **client_kwargs)
 
 db = _client[settings.DB_NAME]
-problems_col = db["problems"]
+problems_col = db["code_problems"]
+testcase_col = db["testcases"]
+solutions_col = db["solutions"]
 
 # Indexes (safe to call multiple times)
 problems_col.create_index("slug", name="slug_unique", unique=True)

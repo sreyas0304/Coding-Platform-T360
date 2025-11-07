@@ -1,39 +1,16 @@
-# from django.shortcuts import render
-
-# # Create your views here.
-# # problems/views.py
-# import json, logging
-# from django.http import JsonResponse, HttpResponseNotAllowed
-# from django.views.decorators.csrf import csrf_exempt
-
-# logger = logging.getLogger("health")
-
-# @csrf_exempt
-# def health_check(request):
-#     try:
-#         if request.method == "GET":
-#             return JsonResponse({"status": "ok", "method": "GET"})
-#         if request.method == "POST":
-#             try:
-#                 body = json.loads(request.body or b"{}")
-#             except json.JSONDecodeError:
-#                 return JsonResponse({"detail": "Invalid JSON"}, status=400)
-#             return JsonResponse({"status": "ok", "method": "POST", "echo": body})
-#         return HttpResponseNotAllowed(["GET", "POST"])
-#     except Exception:
-#         logger.exception("health_check error")
-#         return JsonResponse({"detail": "Internal Server Error"}, status=500)
-
 import re
 import datetime as dt
 import json, logging
+from bson import ObjectId
+from urllib.parse import unquote
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .mongo import problems_col
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.views.decorators.csrf import csrf_exempt
+from .mongo import problems_col, testcase_col, solutions_col
+from .utils import to_jsonable 
 
 logger = logging.getLogger("health")
 
@@ -144,8 +121,56 @@ class ProblemsView(APIView):
 
         return Response({"upserted": upserted, "results": results}, status=status.HTTP_201_CREATED)
 
-    def get(self, request):
+    def get(self, request, slug=None):
         print("hello")
-        cursor = problems_col.find({}, {"_id": 0}).sort([("title", 1)])
-        return Response(list(cursor), status=status.HTTP_200_OK)
+        cursor = problems_col.find({}).sort([("title", 1)])
+        if slug:
+            slug = unquote(slug)
+            doc = problems_col.find_one({"slug": slug}, {"_id": 0})
+            if not doc:
+                return Response({"detail": "Problem Not Found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(doc, status=status.HTTP_200_OK)
+
+        # list branch
+        cursor = problems_col.find({}).sort([("title", 1)])
+        out = []
+        for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            out.append(doc)
+        return Response(out, status=status.HTTP_200_OK)
+
+
+    
+class TestCaseView(APIView):
+
+    def get(self, request):
+        print("test cases")
+        cursor = testcase_col.find({}).sort([("problemSlug", 1)])
+        testcase_list = []
+        for doc in cursor:
+            # Convert ObjectId to string
+            doc['_id'] = str(doc['_id'])
+            testcase_list.append(doc)
+        return Response(testcase_list, status=status.HTTP_200_OK)
+
+
+class SolutionView(APIView):
+    def get(self, request, slug):
+        slug = unquote(slug)
+
+        if not problems_col.find_one({"slug": slug}, {"_id": 1}):
+            return Response({"detail": "Problem Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+        q = {"problemSlug": slug}
+
+        cursor = (solutions_col
+                  .find(q, {"_id": 0})
+                  .sort([("isOfficial", -1), ("upvotes", -1), ("createdAt", -1)])
+                  .limit(1))
+
+        doc = next(cursor, None)
+        if not doc:
+            return Response({"detail": "No solution found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(to_jsonable(doc), status=status.HTTP_200_OK)
 
